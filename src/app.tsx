@@ -1,4 +1,3 @@
-import Footer from '@/components/Footer';
 import RightContent from '@/components/RightContent';
 import { LinkOutlined } from '@ant-design/icons';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
@@ -6,7 +5,7 @@ import { SettingDrawer } from '@ant-design/pro-components';
 import type { RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import defaultSettings from '../config/defaultSettings';
-import { currentUser as queryCurrentUser } from './services/ant-design-pro/api';
+import { getUserGet } from '@/services/personal-website/user';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
@@ -16,14 +15,14 @@ const loginPath = '/user/login';
  * */
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
-  currentUser?: API.CurrentUser;
+  currentUser?: API.User;
   loading?: boolean;
-  fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
+  fetchUserInfo?: () => Promise<API.User | undefined>;
 }> {
   const fetchUserInfo = async () => {
     try {
-      const msg = await queryCurrentUser();
-      return msg.data;
+      const { data } = await getUserGet();
+      return data;
     } catch (error) {
       history.push(loginPath);
     }
@@ -50,9 +49,8 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     rightContentRender: () => <RightContent />,
     disableContentMargin: false,
     waterMarkProps: {
-      content: initialState?.currentUser?.name,
+      content: initialState?.currentUser?.nickName,
     },
-    footerRender: () => <Footer />,
     onPageChange: () => {
       const { location } = history;
       console.log(history);

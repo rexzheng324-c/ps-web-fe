@@ -4,7 +4,7 @@
     layout: false,
     routes: [
       {
-        name: 'login',
+        name: 'auth',
         path: '/user/login',
         component: './User/Login',
       },
@@ -37,10 +37,16 @@
     ],
   },
   {
-    name: 'list.table-list',
+    name: '博客',
     icon: 'table',
-    path: '/list',
-    component: './TableList',
+    path: '/blog',
+    component: './Blog',
+  },
+  {
+    name: '个人简历',
+    icon: 'ContactsOutlined',
+    path: '/resume',
+    component: './Blog',
   },
   {
     path: '/',

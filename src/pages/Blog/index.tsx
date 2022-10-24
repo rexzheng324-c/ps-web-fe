@@ -1,4 +1,3 @@
-import { addRule, removeRule, rule, updateRule } from '@/services/ant-design-pro/api';
 import { PlusOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import {
@@ -11,79 +10,12 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl } from '@umijs/max';
-import { Button, Drawer, Input, message } from 'antd';
+import { Button, Drawer } from 'antd';
 import React, { useRef, useState } from 'react';
-import type { FormValueType } from './components/UpdateForm';
 import UpdateForm from './components/UpdateForm';
+import { postBlogList } from '@/services/personal-website/blog';
 
-/**
- * @en-US Add node
- * @zh-CN 添加节点
- * @param fields
- */
-const handleAdd = async (fields: API.RuleListItem) => {
-  const hide = message.loading('正在添加');
-  try {
-    await addRule({ ...fields });
-    hide();
-    message.success('Added successfully');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('Adding failed, please try again!');
-    return false;
-  }
-};
-
-/**
- * @en-US Update node
- * @zh-CN 更新节点
- *
- * @param fields
- */
-const handleUpdate = async (fields: FormValueType) => {
-  const hide = message.loading('Configuring');
-  try {
-    await updateRule({
-      name: fields.name,
-      desc: fields.desc,
-      key: fields.key,
-    });
-    hide();
-
-    message.success('Configuration is successful');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('Configuration failed, please try again!');
-    return false;
-  }
-};
-
-/**
- *  Delete node
- * @zh-CN 删除节点
- *
- * @param selectedRows
- */
-const handleRemove = async (selectedRows: API.RuleListItem[]) => {
-  const hide = message.loading('正在删除');
-  if (!selectedRows) return true;
-  try {
-    await removeRule({
-      key: selectedRows.map((row) => row.key),
-    });
-    hide();
-    message.success('Deleted successfully and will refresh soon');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('Delete failed, please try again');
-    return false;
-  }
-};
-
-const TableList: React.FC = () => {
+const BlogList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
    * @zh-CN 新建窗口的弹窗
@@ -98,8 +30,8 @@ const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<API.RuleListItem>();
-  const [selectedRowsState, setSelectedRows] = useState<API.RuleListItem[]>([]);
+  const [currentRow, setCurrentRow] = useState<API.Blog>();
+  const [selectedRowsState, setSelectedRows] = useState<API.Blog[]>([]);
 
   /**
    * @en-US International configuration
@@ -107,16 +39,14 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
 
-  const columns: ProColumns<API.RuleListItem>[] = [
+  const columns: ProColumns<API.Blog>[] = [
     {
-      title: (
-        <FormattedMessage
-          id="pages.searchTable.updateForm.ruleName.nameLabel"
-          defaultMessage="Rule name"
-        />
-      ),
-      dataIndex: 'name',
-      tip: 'The rule name is the unique key',
+      dataIndex: 'id',
+      search: false,
+    },
+    {
+      title: <FormattedMessage id="pages.blog.updateForm.title.nameLabel" />,
+      dataIndex: 'title',
       render: (dom, entity) => {
         return (
           <a
@@ -128,93 +58,6 @@ const TableList: React.FC = () => {
             {dom}
           </a>
         );
-      },
-    },
-    {
-      title: <FormattedMessage id="pages.searchTable.titleDesc" defaultMessage="Description" />,
-      dataIndex: 'desc',
-      valueType: 'textarea',
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.searchTable.titleCallNo"
-          defaultMessage="Number of service calls"
-        />
-      ),
-      dataIndex: 'callNo',
-      sorter: true,
-      hideInForm: true,
-      renderText: (val: string) =>
-        `${val}${intl.formatMessage({
-          id: 'pages.searchTable.tenThousand',
-          defaultMessage: ' 万 ',
-        })}`,
-    },
-    {
-      title: <FormattedMessage id="pages.searchTable.titleStatus" defaultMessage="Status" />,
-      dataIndex: 'status',
-      hideInForm: true,
-      valueEnum: {
-        0: {
-          text: (
-            <FormattedMessage
-              id="pages.searchTable.nameStatus.default"
-              defaultMessage="Shut down"
-            />
-          ),
-          status: 'Default',
-        },
-        1: {
-          text: (
-            <FormattedMessage id="pages.searchTable.nameStatus.running" defaultMessage="Running" />
-          ),
-          status: 'Processing',
-        },
-        2: {
-          text: (
-            <FormattedMessage id="pages.searchTable.nameStatus.online" defaultMessage="Online" />
-          ),
-          status: 'Success',
-        },
-        3: {
-          text: (
-            <FormattedMessage
-              id="pages.searchTable.nameStatus.abnormal"
-              defaultMessage="Abnormal"
-            />
-          ),
-          status: 'Error',
-        },
-      },
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.searchTable.titleUpdatedAt"
-          defaultMessage="Last scheduled time"
-        />
-      ),
-      sorter: true,
-      dataIndex: 'updatedAt',
-      valueType: 'dateTime',
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-        if (`${status}` === '0') {
-          return false;
-        }
-        if (`${status}` === '3') {
-          return (
-            <Input
-              {...rest}
-              placeholder={intl.formatMessage({
-                id: 'pages.searchTable.exception',
-                defaultMessage: 'Please enter the reason for the exception!',
-              })}
-            />
-          );
-        }
-        return defaultRender(item);
       },
     },
     {
@@ -243,10 +86,9 @@ const TableList: React.FC = () => {
 
   return (
     <PageContainer>
-      <ProTable<API.RuleListItem, API.PageParams>
+      <ProTable<API.Blog, API.PageParams>
         headerTitle={intl.formatMessage({
-          id: 'pages.searchTable.title',
-          defaultMessage: 'Enquiry form',
+          id: 'pages.blog.title',
         })}
         actionRef={actionRef}
         rowKey="key"
@@ -261,10 +103,26 @@ const TableList: React.FC = () => {
               handleModalVisible(true);
             }}
           >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" />
           </Button>,
         ]}
-        request={rule}
+        request={async (
+          body: API.ListBlogsRequest & {
+            pageSize: number | undefined;
+            current: number | undefined;
+          },
+        ) => {
+          const { data, success } = await postBlogList({
+            ...body,
+            pageSize: body.pageSize,
+            pageNumber: body.current as number,
+          });
+          return {
+            data: data?.data,
+            success: success,
+            total: data?.totalCount,
+          };
+        }}
         columns={columns}
         rowSelection={{
           onChange: (_, selectedRows) => {
@@ -313,8 +171,7 @@ const TableList: React.FC = () => {
       )}
       <ModalForm
         title={intl.formatMessage({
-          id: 'pages.searchTable.createForm.newRule',
-          defaultMessage: 'New rule',
+          id: 'pages.blog.createForm.newBlog',
         })}
         width="400px"
         visible={createModalVisible}
@@ -394,4 +251,4 @@ const TableList: React.FC = () => {
   );
 };
 
-export default TableList;
+export default BlogList;
